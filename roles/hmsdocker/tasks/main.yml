@@ -1,6 +1,6 @@
 ---
 - name: Obtain public IP.
-  ipify_facts:
+  community.general.ipify_facts:
   register: public_ip
 
 - name: Ensure paths exists locally.
