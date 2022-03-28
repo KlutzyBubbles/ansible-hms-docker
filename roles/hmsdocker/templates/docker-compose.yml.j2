@@ -453,7 +453,7 @@ services:
       - TZ={{ container_timezone }}
       - PUID={{ container_uid }}
       - PGID={{ container_gid }}
-      - PLEX_CLAIM={{ plex_claim_token }}
+      # - PLEX_CLAIM={{ plex_claim_token }}
       - ADVERTISE_IP={{ plex_advertise_ip }}:32400
       - ALLOWED_NETWORKS={{ hms_docker_network_subnet }}
 {% if enable_nvidia_gpu %}
