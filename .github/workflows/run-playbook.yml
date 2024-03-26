@@ -1,0 +1,42 @@
+name: Deployment Tests
+run-name: Test Deployment
+on:
+  push:
+  schedule:
+    - cron:  '23 9 * * 0'
+
+permissions:
+  contents: read
+
+jobs:
+  Ubuntu_22:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out repo code
+        uses: actions/checkout@v4
+
+      - name: Install ansible
+        run: |
+          sudo apt update
+          sudo apt install ansible make python3-pip
+
+      - name: Ensure base playbook requirements
+        run: |
+          mkdir -p ./vars/custom
+          cp vars/default/*.yml ./vars/custom
+          mv ./vars/custom/main.yml ./vars/custom/main_custom.yml
+          sudo make install-reqs
+
+      - name: Run playbook
+        run: >-
+          sudo ansible-playbook
+          -i inventory
+          --connection local
+          hms-docker.yml
+          --diff
+          --extra-vars "@.github/extra-vars.yml"
+
+      - name: Check containers
+        run: |
+          sleep 10
+          sudo make verify-containers

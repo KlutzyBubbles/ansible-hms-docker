@@ -1,0 +1,18 @@
+# cache files
+.dccache
+
+# env stuff
+.venv/
+
+# python stuff
+__pycache__/
+
+galaxy-roles/
+vars/custom.yml
+vars/custom/*
+!vars/custom/main.yml
+
+# others to ignore
+*.log
+*.env
+.vscode/

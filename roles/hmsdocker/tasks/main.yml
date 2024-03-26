@@ -1,10 +1,6 @@
 ---
-- name: Obtain public IP.
-  community.general.ipify_facts:
-  register: public_ip
-
 - name: Ensure paths exists locally.
-  file:
+  ansible.builtin.file:
     path: "{{ item }}"
     state: directory
   loop:
@@ -27,39 +23,114 @@
   no_log: yes
 
 - name: Ensure library folders.
-  file:
+  ansible.builtin.file:
     path: "{{ hms_docker_media_path }}/{{ item.folder_name }}"
     state: directory
   with_items: "{{ hms_docker_library_folders }}"
 
 - name: Ensure container config directories exist.
-  file:
+  ansible.builtin.file:
     path: "{{ hms_docker_apps_path }}/{{ item.key }}/config"
     state: directory
   with_dict: "{{ hms_docker_container_map }}"
   when: item.value.directory and (item.value.enabled is defined and item.value.enabled)
 
+- name: Ensure separate 4K container config directories exist if enabled.
+  ansible.builtin.file:
+    path: "{{ hms_docker_apps_path }}/{{ item.key }}-{{ separate_4k_instances_suffix }}/config"
+    state: directory
+  with_dict: "{{ hms_docker_container_map }}"
+  when: 
+    - item.value.directory
+    - item.value.enabled is defined and item.value.enabled
+    - item.key == 'sonarr' or item.key == 'radarr'
+    - separate_4k_instances_enable is defined and separate_4k_instances_enable
+
 - name: Ensure Traefik
   import_tasks: "traefik.yml"
-  when: hms_docker_container_map.traefik.enabled is defined and hms_docker_container_map.traefik.enabled
+  when: container_enabled_traefik
+
+- name: Ensure Authentik
+  import_tasks: "authentik.yml"
+  when: (authentik_enabled_globally and 
+        traefik_ssl_enabled)
+
+- name: Ensure homepage
+  ansible.builtin.import_tasks: "homepage.yml"
+  when: container_enabled_homepage
+
+- name: Ensure JBOPS if enabled
+  when: tautulli_jbops_enabled | default(false)
+  block:
+    - name: Ensure global git config ignores dubious ownership permissions
+      community.general.git_config:
+        name: safe.directory
+        scope: global
+        value: "{{ tautulli_jbops_install_path }}"
+    - name: Ensure JBOPS repo
+      ansible.builtin.git:
+        repo: https://github.com/blacktwin/JBOPS
+        clone: true
+        dest: "{{ tautulli_jbops_install_path }}"
+      diff: false
+      changed_when: false
+  
+
+- name: Ensure env
+  ansible.builtin.template:
+    src: env.j2
+    dest: "{{ hms_docker_data_path }}/.env"
+    mode: "{{ secrets_env_mode }}"
+    owner: "{{ secrets_env_user }}"
+    group: "{{ secrets_env_group }}"
+    backup: yes
+    lstrip_blocks: yes
+    trim_blocks: yes
+  no_log: true
+  register: compose_env
+  vars:
+  - authentik_key: "{{ (slurped_key_data['content'] | b64decode) if slurped_key_data['content'] is defined else '### Will be obtained during full run ###' }}"
+  - authentik_pgpass: "{{ (slurped_pg_pass_data['content'] | b64decode) if slurped_pg_pass_data['content'] is defined else '### Will be obtained during full run ###' }}"
+  - authentik_pgu: "{{ authentik_old_pg_user if authentik_old_pg_user is defined and authentik_old_pg_user != '' else authentik_pg_user }}"
+  - authentik_pgdb: "{{ authentik_old_pg_db if authentik_old_pg_db is defined and authentik_old_pg_db != '' else authentik_pg_db }}"
+  - watchtower_key: "{{ (slurped_watchtower_key_data['content'] | b64decode) if slurped_watchtower_key_data['content'] is defined else '### Will be obtained during full run ###' }}"
 
 - name: Ensure docker-compose.yml file.
-  template:
+  ansible.builtin.template:
     src: docker-compose.yml.j2
     dest: "{{ hms_docker_data_path }}/docker-compose.yml"
     group: docker
     mode: 0644
     backup: yes
+    lstrip_blocks: yes
+    trim_blocks: yes
 
 - name: Ensure containers defined in compose file.
-  docker_compose:
+  community.docker.docker_compose:
     project_src: "{{ hms_docker_data_path }}"
     project_name: "{{ project_name }}"
     pull: "{{ container_pull_images_first }}"
     state: "{{ hms_docker_compose_container_state }}"
     remove_orphans: "{{ container_remove_orphans }}"
-  when: not ansible_check_mode
+    # env_file: "{{ compose_env.dest }}" # Commented out since this module defaults to using the .env file within the project_src location, but leaving just in case advanced users wish to point to a different location
+  when: 
+    - not ansible_check_mode
+
+- name: Sabnzbd additional config
+  ansible.builtin.import_tasks: "sabnzbd.yml"
+  when: container_enabled_sabnzbd
+
+- name: Ensure Plex SSL script and resources
+  ansible.builtin.import_tasks: "plex_ssl.yml"
+  when: hms_docker_plex_ssl_enabled and traefik_ssl_enabled
+
+- name: Ensure custom scripts
+  import_tasks: "scripts.yml"
+  when: custom_scripts_enabled | default(false)
 
 - name: Ensure Transmission and VPN connection
   import_tasks: "transmission.yml"
-  when: hms_docker_container_map.transmission.enabled is defined and hms_docker_container_map.transmission.enabled
+  when: 
+    - container_enabled_transmission
+    - not ansible_check_mode
+    - not is_github_runner | default(false)

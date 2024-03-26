@@ -5,6 +5,10 @@ global:
 log:
   level: "{{ traefik_log_level }}"
 
+{% if traefik_enable_access_logs %}
+accessLog: {}
+{% endif %}
+
 api:
   dashboard: true
   insecure: true
@@ -27,7 +31,9 @@ entryPoints:
         domains:
           - main: "{{ traefik_ssl_dns_provider_zone }}"
             sans:
-              - "*.{{ traefik_ssl_dns_provider_zone }}"
+{% for san in traefik_ssl_sans %}
+              - "{{- san -}}"
+{% endfor %}
 
 certificatesResolvers:
   letsencrypt:
@@ -46,14 +52,27 @@ certificatesResolvers:
           - "{{ traefik_ssl_dns_resolver_2 }}"
 {% endif %}
 
+{% if traefik_security_hardening and traefik_ssl_enabled %}
+tls:
+  options:
+    default:
+      minVersion: VersionTLS12
+
+    mintls13:
+      minVersion: VersionTLS13
+{% endif %}
+
+serversTransport:
+  insecureSkipVerify: true
+
 providers:
   docker:
     network: "{{ project_name }}_traefik_net"
     endpoint: unix:///var/run/docker.sock
     exposedByDefault: false
-    defaultRule: {% raw %}Host(`{{if index .Labels "com.docker.compose.service" }}{{ index .Labels "com.docker.compose.service" }}{% endraw %}.{{ hms_docker_domain }}{% raw %}{{else}}{{ trimPrefix `/` .Name }}{% endraw %}.{{ hms_docker_domain }}{% raw %}{{end}}`){% endraw %}
-
-{% if traefik_pilot_token %}
-pilot:
-  token: "{{ traefik_pilot_token }}"
+    defaultRule: {% raw %}Host(`{{if index .Labels "com.docker.compose.service" }}{{ index .Labels "com.docker.compose.service" }}{% endraw %}.{{ hms_docker_domain }}{% raw %}{{else}}{{ trimPrefix `/` .Name }}{% endraw %}.{{ hms_docker_domain }}{% raw %}{{end}}`){% endraw +%}
+{% if traefik_ext_hosts_enabled %}
+  file:
+    directory: /etc/traefik/static_files
+    watch: true
 {% endif %}
