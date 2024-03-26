@@ -96,7 +96,7 @@ hms_docker_container_map:
     homepage: yes
     homepage_stats: no
   plex:
-    enabled: yes
+    enabled: no
     proxy_host_rule: plex
     directory: yes
     traefik: yes
@@ -116,7 +116,7 @@ hms_docker_container_map:
     homepage: yes
     homepage_stats: no
   nzbget:
-    enabled: no
+    enabled: yes
     proxy_host_rule: nzbget
     directory: yes
     traefik: yes
@@ -146,7 +146,7 @@ hms_docker_container_map:
     homepage: yes
     homepage_stats: no
   tdarr:
-    enabled: no
+    enabled: yes
     proxy_host_rule: tdarr
     directory: yes
     traefik: yes
@@ -156,7 +156,7 @@ hms_docker_container_map:
     homepage: yes
     homepage_stats: no
   homepage:
-    enabled: no
+    enabled: yes
     proxy_host_rule: homepage
     directory: yes
     traefik: yes
@@ -174,7 +174,7 @@ hms_docker_container_map:
     authentik_provider_type: proxy
     expose_to_public: no
   heimdall:
-    enabled: no
+    enabled: yes
     proxy_host_rule: heimdall
     directory: yes
     traefik: yes

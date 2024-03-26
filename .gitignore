@@ -8,9 +8,6 @@
 __pycache__/
 
 galaxy-roles/
-vars/custom.yml
-vars/custom/*
-!vars/custom/main.yml
 
 # others to ignore
 *.log
