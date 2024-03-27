@@ -461,6 +461,11 @@ services:
     {% elif transmission_custom_download_path_enabled %}
       - {{ transmission_custom_download_path }}/torrents:/data/torrents
     {% else %}
+    {% if nas_enable_additional_paths %}
+        {% for path in nas_client_remote_additional_paths %}
+      - {{ path.local_mount_path }}/{{ hms_docker_library_folder_name }}:/data/media_additional/{{ path.name | map('regex_replace', regex, replace) | list | join }}
+        {% endfor %}
+    {% endif %}
       - ${HMSD_APPS_PATH}/transmission/torrents:/data/torrents
     {% endif %}
     {% if container_enabled_homepage and homepage_enabled_transmission %}
