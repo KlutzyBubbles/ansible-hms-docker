@@ -3,7 +3,7 @@
 # The VPN provider to use and the credentials to use for the VPN connection
 transmission_vpn_provider: "PIA"
 transmission_vpn_user: "p3448683"
-transmission_vpn_pass: "hUf8uvFVfj"
+transmission_vpn_pass: ""
 
 # Transmission seed ratio settings
 transmission_ratio_limit: "1" # default: "1"
