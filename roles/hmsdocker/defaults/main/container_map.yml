@@ -66,7 +66,7 @@ hms_docker_container_map:
     homepage: yes
     homepage_stats: no
   overseerr:
-    enabled: yes
+    enabled: no
     proxy_host_rule: overseerr
     directory: yes
     traefik: yes

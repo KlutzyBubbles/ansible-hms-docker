@@ -36,7 +36,7 @@ hms_docker_library_folders:
   ]
 
 # The domain used for the Traefik proxy Host rules, SSL certificate (if enabled), and DDNS (if enabled) // default: "home.local"
-hms_docker_domain: hms.klutzybubbles.me
+hms_docker_domain: klutzybubbles.me
 
 ### End of HMS-Docker settings
 #######################################################################
