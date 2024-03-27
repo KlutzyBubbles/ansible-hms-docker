@@ -13,6 +13,8 @@
 
 - name: NAS base configuration tasks.
   include_tasks: "nas_{{ hms_docker_media_share_type | lower }}.yml"
+  when:
+    - nas_client_use_additional_paths is not defined or not nas_client_use_additional_paths
 
 - name: Ensure additional NAS configuration
   include_tasks: "nas_additional_{{ item.type | lower }}.yml"
