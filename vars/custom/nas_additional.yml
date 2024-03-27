@@ -1,0 +1,57 @@
+# If you have more than one remote share path to use, you can enable this setting and define them below, please be sure to read the required values for each share type (CIFS, NFS, local)
+nas_client_use_additional_paths: yes
+
+### Follow the example template after these required values
+# Required values for `local` folder type:
+# `name`: Friendly name of the path
+# `local_mount_path`: Local path to the folder
+# `type`: Type of path, valid: local
+
+# Required values for `nfs` folder type:
+# `name`: Friendly name of the path
+# `remote_path`: Remote path to the folder
+# `local_mount_path`: Local path to where it will be mounted
+# `type`: Type of path, valid: nfs
+# `nfs_opts`: NFS options, default: defaults
+
+# Required values for `cifs` folder type:
+# `name`: Friendly name of the path
+# `remote_path`: Remote path to the folder
+# `local_mount_path`: Local path to where it will be mounted
+# `type`: Type of path, valid: cifs
+# `cifs_username`: CIFS username, default: ""
+# `cifs_password`: CIFS password, default: ""
+# `cifs_opts`: CIFS options, default: rw,soft
+
+# This should be scalable to as many different shares as you want
+# This is an example template
+nas_client_remote_additional_paths:
+  [
+    {
+      name: "movies",
+      remote_path: "//truenas.klutzybubbles.me/movies",
+      local_mount_path: "{{ hms_docker_mount_path }}/movies",
+      type: cifs,
+      cifs_username: "klutzypu",
+      cifs_password: "",
+      cifs_opts: "rw,soft",
+    },
+    {
+      name: "tvshows",
+      remote_path: "//truenas.klutzybubbles.me/tvshows",
+      local_mount_path: "{{ hms_docker_mount_path }}/tvshows",
+      type: cifs,
+      cifs_username: "klutzypu",
+      cifs_password: "",
+      cifs_opts: "rw,soft",
+    },
+    #{
+    #  name: "Media NAS 3",
+    #  remote_path: "//nas.example.com/media_3",
+    #  local_mount_path: "{{ hms_docker_mount_path }}_custom_path_3",
+    #  type: cifs,
+    #  cifs_username: "",
+    #  cifs_password: "",
+    #  cifs_opts: "rw,soft",
+    #},
+  ]
